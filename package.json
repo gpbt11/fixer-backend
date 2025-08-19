@@ -1,15 +1,15 @@
 {
   "name": "fixer-backend",
   "version": "1.0.0",
-  "description": "Real-time backend for the Fixer App",
+  "description": "Token server for Fixer App",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "socket.io": "^4.7.2",
-    "assemblyai": "^4.4.1",
-    "buffer": "^6.0.3"
+    "axios": "^1.6.2",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
   },
   "engines": {
     "node": "18"
