@@ -7,8 +7,8 @@ app.use(cors({ origin: true }));
 
 const ASSEMBLYAI_API_KEY = process.env.ASSEMBLYAI_API_KEY;
 
-// This is our single, simple endpoint
-app.post('/token', async (req, res) => {
+// CORRECTED LINE: The server now listens for POST requests on the "/token" path.
+app.post("/token", async (req, res) => {
   console.log("Token request received.");
 
   if (!ASSEMBLYAI_API_KEY) {
@@ -19,7 +19,7 @@ app.post('/token', async (req, res) => {
   try {
     const response = await axios.post(
       "https://api.assemblyai.com/v2/realtime/token",
-      { expires_in: 3600 }, // Token is valid for 1 hour
+      { expires_in: 3600 },
       { headers: { Authorization: ASSEMBLYAI_API_KEY } }
     );
     
