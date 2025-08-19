@@ -1,75 +1,38 @@
-const http = require('http');
-const { Server } = require("socket.io");
-const { AssemblyAI } = require('assemblyai');
-const { Buffer } = require('buffer');
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors');
 
-const server = http.createServer();
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
+const app = express();
+app.use(cors({ origin: true }));
+
+const ASSEMBLYAI_API_KEY = process.env.ASSEMBLYAI_API_KEY;
+
+// This is our single, simple endpoint
+app.post('/token', async (req, res) => {
+  console.log("Token request received.");
+
+  if (!ASSEMBLYAI_API_KEY) {
+    console.error("AssemblyAI API Key not configured.");
+    return res.status(500).send({ error: "Server configuration incomplete." });
+  }
+
+  try {
+    const response = await axios.post(
+      "https://api.assemblyai.com/v2/realtime/token",
+      { expires_in: 3600 }, // Token is valid for 1 hour
+      { headers: { Authorization: ASSEMBLYAI_API_KEY } }
+    );
+    
+    console.log("Token generated successfully.");
+    return res.status(200).send({ token: response.data.token });
+
+  } catch (error) {
+    console.error("Error creating token:", error.response ? error.response.data : error.message);
+    return res.status(500).send({ error: "Could not generate token." });
   }
 });
 
-const client = new AssemblyAI({
-  apiKey: process.env.ASSEMBLYAI_API_KEY
-});
-
-io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-  let transcriber;
-
-  socket.on('start_session', async () => {
-    console.log('start_session event received');
-    transcriber = client.realtime.transcriber({
-        sampleRate: 16000,
-        // THE ONLY CHANGE IS HERE:
-        languageCode: 'en_US' // Changed from 'pt' to 'en_US' for the test
-    });
-
-    transcriber.on('transcript', (transcript) => {
-        if (transcript.text) {
-            console.log(`[Transcription]: ${transcript.text}`);
-            socket.emit('message', transcript.text);
-        }
-    });
-
-    transcriber.on('error', (error) => {
-        console.error('AssemblyAI Service Error:', error);
-    });
-
-    try {
-        await transcriber.connect();
-        socket.emit('message', 'Transcription service connected (English).');
-    } catch (error) {
-        console.error('Error connecting to AssemblyAI:', error);
-    }
-  });
-  
-  socket.on('audio', (data) => {
-    if (transcriber) {
-      transcriber.stream(Buffer.from(data, 'base64'));
-    }
-  });
-  
-  socket.on('stop_session', async () => {
-      if (transcriber) {
-          await transcriber.close();
-          transcriber = null;
-          console.log('Transcription session closed.');
-      }
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-    if (transcriber) {
-      transcriber.close();
-      transcriber = null;
-    }
-  });
-});
-
 const port = process.env.PORT || 10000;
-server.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
+app.listen(port, () => {
+  console.log(`Fixer token server listening on port ${port}`);
 });
