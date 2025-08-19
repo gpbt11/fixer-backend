@@ -21,9 +21,12 @@ io.on('connection', (socket) => {
 
   socket.on('start_session', async () => {
     console.log('start_session event received');
+    
+    // THE FIX IS HERE: We are explicitly selecting the 'Conformer-2' model.
     transcriber = client.realtime.transcriber({
         sampleRate: 16000,
-        languageCode: 'pt'
+        languageCode: 'pt',
+        model: 'Conformer-2' // This is the new, crucial line.
     });
 
     transcriber.on('transcript', (transcript) => {
@@ -39,7 +42,7 @@ io.on('connection', (socket) => {
 
     try {
         await transcriber.connect();
-        socket.emit('message', 'Transcription service ready.');
+        socket.emit('message', 'Transcription service connected and ready.');
     } catch (error) {
         console.error('Error connecting to AssemblyAI:', error);
     }
